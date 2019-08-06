@@ -267,14 +267,75 @@
 
         </div>
     </div>
-
+     <!-- 导入模板引擎js文件 -->
+    <script src="./js/template-web.js"></script>
+    <!-- 准备一个模板 -->
+    <script  id="article_list" type="text/html">
+   {{each data.data value}}
+    <tr>
+            <td>{{value.title}}</td>
+            <td>{{value.author}}</td>
+            <td>{{value.categoryName}}</td>
+            <td class="text-center">{{value.date}}</td>
+            <td class="text-center">{{value.state}}</td>
+            <td class="text-center">
+                <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
+                <a href="#" data-id={{value.id}} class="btn btn-danger btn-xs">删除</a>
+            </td>
+        </tr>
+    {{/each}}
+</script>
     <script>
         // 设置左侧菜单
         $('#release_btn').click(function () {
             window.parent.setMenu(1, 1);
         })
-    </script>
+    //入口函数
+    $(function(){
+        //声明一个全局变,用来记录所有的文章类别
+        var cateobjArr=null;
+     //需求:一进来这个文章列表页面,就通过发送ajax获取所有的文章类别
+     $.ajax({
+         type:'get',
+         url:'http://localhost:8080/admin/category/list',
+         success:function(backData){
+            console.log(backData);
+            cateobjArr=backData.data;
+            //这是一个数组,数组里面的元素是一个个对象
+         }
+     })
+     //需求一进来文章列表页面,就显示真是的文章数据
+     //一进到页面就发送ajax请求
+     $.ajax({
+         type:'get',
+         url: 'http://localhost:8080/admin/article/query',
+         data:{
+             state:'已发布'
+         },
+         success:function(backData){
+             if(backData.code==200){
+                 //遍历处理back.data.data
+                 for(i=0;i<backData.data.data.length;i++){
+                     for(j=0;j<cateobjArr.length;j++){
+                    //判断
+                    if(backData.data.data[i].categoryId==cateobjArr[j].id){
+                        //如果相等的话,就取这个分类的名字,添加到backData中去
+                        backData.data.data[i].categoryName=cateobjArr[j].name;
+                        break;
+                    }
+                     }
+                 }
+                 console.log(backData);
+                 //把返回的数据,通过模板引擎渲染到页面
+                 var resHtml=template('article_list',backData);
+                 $('tbody').html(resHtml);
+             }
+         }
 
+
+     })
+    })
+</script>
 </body>
 
 </html>
