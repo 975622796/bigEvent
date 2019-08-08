@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="css/iconfont.css">
     <link rel="stylesheet" href="css/main.css">
     <script src="js/jquery-1.12.4.min.js"></script>
+    <script src="./js/bootstrap/js/bootstrap.min.js" ></script>
+    <script  src="./js/jquery.twbsPagination.js"></script>
 </head>
 
 <body>
@@ -310,34 +312,97 @@
                     $('#selCategory').html(resHtml);
                 }
             });
-
+            var artiCate;
+            var artiState;
+            var isTrue = true;//声明一个变量,是来判断点击的筛选按钮
             //需求: 点击筛选按钮,筛选出符合条件(文章分类和文章状态)的文章
             //1.给按钮设置点击事件.
-            $('#btnSearch').on('click',function(e){
+            $('#btnSearch').on('click', function (e) {
                 e.preventDefault();
-                var artiCate=$('#selCategory').val();
-                var artiState=$('#selStatus').val();
-                console.log(artiCate,artiState);
-            })
-            $.ajax({
-                type: 'get',
-                url: 'http://localhost:8080/admin/article/query',
-                 data:{
-                     type:artiCate,
-                     state:artiState,
-                 },
-                success: function (backData) {
-                    if (backData.code == 200) {
+                isTrue = false;
+                //2.获取下拉菜单中选中的文章分类和文章状态.
+                //  修改一下文章状态那个下拉菜单中的option项的value值
+                artiCate = $('#selCategory').val();
+                artiState = $('#selStatus').val();
+                console.log(artiCate, artiState);
+                // $.ajax({
+                //     type: 'get',
+                //     url: 'http://localhost:8080/admin/article/query',
+                //     data: {
+                //         type: artiCate,
+                //         state: artiState,
+                //     },
+                //     success: function (backData) {
+                //         if (backData.code == 200) {
 
-                        console.log(backData);
-                        //把返回的数据,通过模板引擎渲染到页面
-                        var resHtml = template('article_list', backData);
-                        $('tbody').html(resHtml);
-                    }
+                //             console.log(backData);
+                //             //把返回的数据,通过模板引擎渲染到页面
+                //             var resHtml = template('article_list', backData);
+                //             $('tbody').html(resHtml);
+                //         }
+                //     }
+
+
+                // })
+                getData(1, artiCate, artiState)
+            });
+            //声明一个变量,用来保存总页数
+            var mytotalPages = 5;
+            //需求:分页
+            var $pagination=$('.pagination');
+            var defaultOpts={
+                //总页数
+                totalPages: mytotalPages,
+                visiblePages: 7,
+                first:'首页',
+                prev:'上一页',
+                next:'下一页',
+                last:'尾页',
+                 //事件什么时候触发: 点击分页插件的页码的时候触发
+                    onPageClick: function (event, page) {
+                        //page是当前点击的这个页码数.
+                    getData(page, artiCate, artiState);
                 }
+            }
+            $pagination.twbsPagination(defaultOpts);
 
+            // //需求: 一进到文章列表页面,就显示真实的文章数据.
+            // //1.一进到页面,就显示第一页的数据
+            // getData(1);
 
-            })
+            //把获取文章的代码封装成一个函数
+            function getData(myPage, artiCate, artiState) {
+                $.ajax({
+                    type: 'get',
+                    url: 'http://localhost:8080/admin/article/query',
+                    data: {
+                        type: artiCate, //所有分类
+                        state: artiState, //所有状态
+                        page: myPage,
+                        perpage: 7,
+                    },
+                    success: function (backData) {
+                        if (backData.code == 200) {
+                            //2.把返回的数据通过模板引擎渲染到页面上.
+                            var resHtml = template('article_list', backData);
+                            $('tbody').html(resHtml);
+
+                            //根据返回来的数据(里面包含总页数)重新渲染页码条
+                            var totalPages = backData.data.totalPage;//获取总的页码数
+                            if(mytotalPages != totalPages ||isTrue==false ){
+                                mytotalPages=totalPages;
+                                var currentPage = $pagination.twbsPagination('getCurrentPage');//获取当前页
+                                $pagination.twbsPagination('destroy');
+                                $pagination.twbsPagination($.extend({}, defaultOpts, {
+                                startPage: 1,
+                                totalPages: totalPages
+                            }));
+                               isTrue=true;
+                            }                           
+                        }
+                    }
+                    });
+            }
         })
     </script>
 </body>
