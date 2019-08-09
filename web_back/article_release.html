@@ -33,7 +33,12 @@
                 <div class="form-group">
                     <label for="inputPassword3" class="col-sm-2 control-label">文章封面：</label>
                     <div class="col-sm-10">
-                        <input type="file" name="cover" id="exampleInputFile">
+                        <img src="./images/2.jpg" alt="" class="user_pic" >
+                        <br>
+                        <label for="exampleInputFile">
+                            <img src="./images/uploadFileIcon.png" alt="">
+                        </label>
+                        <input style="display: none" type="file" name="cover" id="exampleInputFile">
                     </div>
                 </div>
                 <div class="form-group">
@@ -87,6 +92,15 @@
 <script>
 //入口函数
 $(function(){
+     //给input:file标签设置一个change事件
+    $('#exampleInputFile').on('change',function(){
+        //2.用files获取到这个标签选中的文件.
+        var fileIcon=this.files[0];
+        //3.通过url.createObjectURL来创建一个url
+        var url=URL.createObjectURL(fileIcon);
+        //4.把这个路径交给img的是src属性
+        $('.user_pic').attr('src',url);
+    });
      //需求: 一进到页面获取所有的文章分类
      $.ajax({
                 type: 'get',
